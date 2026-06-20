@@ -1,0 +1,584 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>理想光学系统 · 物象关系图解</title>
+  <style>
+    :root {
+      --navy: #14213d;
+      --ink: #26364e;
+      --muted: #6e7a8b;
+      --line: #e5eaf0;
+      --paper: #f7f9fc;
+      --panel: #ffffff;
+      --accent: #246bfd;
+      --accent-soft: #eaf1ff;
+      --ray1: #f06449;
+      --ray2: #8064e9;
+      --green: #0c9b73;
+      --warning: #c76f00;
+      --shadow: 0 12px 30px rgba(30, 55, 92, .09);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+    }
+    button, input { font: inherit; }
+    .app { min-height: 100vh; display: grid; grid-template-rows: auto 1fr; }
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 16px 22px; color: #fff;
+      background: linear-gradient(120deg, #14213d, #1f4c86);
+      box-shadow: 0 4px 17px rgba(20, 33, 61, .18);
+    }
+    header h1 { margin: 0; font-size: 20px; font-weight: 750; letter-spacing: .02em; }
+    header p { margin: 4px 0 0; font-size: 13px; opacity: .78; }
+    .tag { padding: 6px 10px; border: 1px solid rgba(255,255,255,.34); border-radius: 999px; font-size: 12px; white-space: nowrap; }
+    .layout { display: grid; grid-template-columns: minmax(245px, 290px) minmax(500px, 1fr) minmax(260px, 315px); gap: 16px; padding: 16px; max-width: 1780px; width: 100%; margin: 0 auto; }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 15px; box-shadow: var(--shadow); }
+    .controls, .results { padding: 18px; align-self: start; }
+    .panel-title { margin: 0 0 15px; font-size: 15px; color: var(--navy); }
+    .group { padding: 14px 0; border-top: 1px solid var(--line); }
+    .group:first-of-type { padding-top: 0; border-top: 0; }
+    .group h3 { margin: 0 0 11px; color: #4a5a70; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
+    .field { margin: 0 0 13px; }
+    .field:last-child { margin-bottom: 0; }
+    .label-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 6px; font-size: 13px; }
+    .label-row code { color: var(--accent); font-size: 14px; font-weight: 700; }
+    .number-input { width: 78px; border: 1px solid #cfd8e6; border-radius: 7px; padding: 4px 6px; text-align: right; color: var(--navy); background: #fff; }
+    input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+    .check { display: flex; align-items: center; gap: 9px; margin: 9px 0; font-size: 13px; cursor: pointer; }
+    .check input { width: 16px; height: 16px; accent-color: var(--accent); }
+    .button-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    button { cursor: pointer; border: 1px solid #cdd7e5; color: #36506e; background: #fff; padding: 9px 10px; border-radius: 8px; font-size: 13px; transition: .15s ease; }
+    button:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
+    button.primary { background: var(--accent); border-color: var(--accent); color: white; font-weight: 650; }
+    button.primary:hover { background: #1758db; color: white; }
+    button.wide { grid-column: 1 / -1; }
+    button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+    .hint { margin: 13px 0 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+    .stage { min-width: 0; display: flex; flex-direction: column; gap: 11px; }
+    .stage-head { display: flex; justify-content: space-between; align-items: center; padding: 0 4px; gap: 12px; }
+    .stage-head strong { color: var(--navy); font-size: 15px; }
+    .legend { display: flex; gap: 12px; align-items: center; color: #617087; font-size: 12px; flex-wrap: wrap; justify-content: end; }
+    .legend i { display: inline-block; width: 16px; height: 3px; vertical-align: middle; margin-right: 4px; border-radius: 4px; }
+    .legend .l1 { background: var(--ray1); }.legend .l2 { background: var(--ray2); }.legend .aux { background: repeating-linear-gradient(to right, #92a0b4 0 4px, transparent 4px 7px); }
+    .canvas-wrap { overflow: hidden; padding: 8px; }
+    svg { display: block; width: 100%; min-height: 560px; background: linear-gradient(#fff, #fbfcff); border-radius: 11px; touch-action: none; }
+    .caption { padding: 10px 13px; border-radius: 10px; background: #f0f5fe; border-left: 4px solid var(--accent); color: #3c5477; font-size: 13px; line-height: 1.55; }
+    .caption b { color: var(--navy); }
+    .result-card { border-radius: 11px; padding: 13px; background: linear-gradient(145deg, #f1f6ff, #fbfdff); border: 1px solid #dce8fd; margin-bottom: 15px; }
+    .result-card .state { color: var(--accent); font-size: 12px; font-weight: 700; letter-spacing: .04em; }
+    .result-card .big { color: var(--navy); font-weight: 750; font-size: 17px; margin-top: 5px; }
+    .location-note { margin-top: 8px; color: #516b91; font-size: 12px; line-height: 1.45; }
+    .metrics { margin: 0; display: grid; gap: 0; }
+    .metric { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--line); }
+    .metric dt { color: var(--muted); font-size: 13px; }.metric dd { margin: 0; color: var(--navy); font-size: 14px; font-weight: 700; }
+    .formula { color: #3e5270; background: #fbfcfe; border: 1px solid var(--line); border-radius: 10px; padding: 12px; font-family: Cambria, "Times New Roman", serif; font-size: 15px; line-height: 1.8; overflow-wrap: anywhere; }
+    .formula .sub { font-family: "Microsoft YaHei", sans-serif; font-size: 12px; color: var(--muted); margin-top: 7px; line-height: 1.5; }
+    .sign-note { color: #526780; background: #fffaf0; border: 1px solid #f2dfb8; border-radius: 10px; padding: 11px 12px; font-size: 12px; line-height: 1.58; }
+    .hidden { display: none !important; }
+    @media (max-width: 1160px) { .layout { grid-template-columns: 255px minmax(480px, 1fr); }.results { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }.results > * { margin: 0 !important; }.results .panel-title { grid-column: 1 / -1; }.formula, .sign-note { align-self: stretch; } }
+    @media (max-width: 780px) { header { align-items: flex-start; }.tag { display: none; }.layout { display: block; padding: 10px; }.panel { margin-bottom: 12px; }.results { display: block; }.results > * { margin-bottom: 14px !important; }.stage-head { align-items: flex-start; flex-direction: column; }.legend { justify-content: flex-start; } svg { min-height: 420px; } }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div><h1>理想光学系统 · 物象关系图解</h1><p>让特殊光线、公式计算和成像性质在同一张图上彼此印证。</p></div>
+      <div class="tag">沿光线传播方向为正（左 → 右）</div>
+    </header>
+
+    <section class="layout">
+      <aside class="panel controls" aria-label="参数设置">
+        <h2 class="panel-title">参数设置</h2>
+        <section class="group">
+          <h3>求解方式</h3>
+          <div class="field"><div class="label-row"><span>当前模式</span><select id="solveMode" class="number-input" style="width: 148px"><option value="object">由物求像</option><option value="image">由像求物</option></select></div></div>
+          <p id="modeHint" class="hint" style="margin-top: 0"></p>
+        </section>
+        <section class="group">
+          <h3>理想光学系统</h3>
+          <div class="field"><div class="label-row"><span>系统类型</span><select id="systemType" class="number-input" style="width: 128px"><option value="1">会聚（f′ &gt; 0）</option><option value="-1">发散（f′ &lt; 0）</option></select></div></div>
+          <div class="field"><div class="label-row"><span>焦距大小 <code>|f′|</code>（cm）</span><input id="focusNumber" class="number-input" type="number" min="5" max="120" step="1"></div><input id="focus" type="range" min="5" max="120" step="1"></div>
+          <div class="field"><div class="label-row"><span>主平面间距 <code>HH′</code>（cm）</span><input id="gapNumber" class="number-input" type="number" min="0" max="60" step="1"></div><input id="gap" type="range" min="0" max="60" step="1"></div>
+        </section>
+        <section id="objectInputGroup" class="group">
+          <h3>物体 AB</h3>
+          <div class="field"><div class="label-row"><span>物的类型</span><select id="objectType" class="number-input" style="width: 128px"><option value="-1">实物（l &lt; 0）</option><option value="1">虚物（l &gt; 0）</option></select></div></div>
+          <div class="field"><div class="label-row"><span>物距大小 <code>|l|</code>（cm）</span><input id="objectNumber" class="number-input" type="number" min="5" max="220" step="1"></div><input id="objectDistance" type="range" min="5" max="220" step="1"></div>
+          <div class="field"><div class="label-row"><span>物高 <code>y</code>（cm）</span><input id="heightNumber" class="number-input" type="number" min="2" max="55" step="1"></div><input id="height" type="range" min="2" max="55" step="1"></div>
+        </section>
+        <section id="imageInputGroup" class="group hidden">
+          <h3>给定像 A′B′</h3>
+          <div class="field"><div class="label-row"><span>像的类型</span><select id="imageType" class="number-input" style="width: 128px"><option value="1">实像（l′ &gt; 0）</option><option value="-1">虚像（l′ &lt; 0）</option></select></div></div>
+          <div class="field"><div class="label-row"><span>像距大小 <code>|l′|</code>（cm）</span><input id="imageDistanceNumber" class="number-input" type="number" min="5" max="220" step="1"></div><input id="imageDistance" type="range" min="5" max="220" step="1"></div>
+          <div class="field"><div class="label-row"><span>像的方向</span><select id="imageOrientation" class="number-input" style="width: 128px"><option value="-1">倒立（y′ &lt; 0）</option><option value="1">正立（y′ &gt; 0）</option></select></div></div>
+          <div class="field"><div class="label-row"><span>像高大小 <code>|y′|</code>（cm）</span><input id="imageHeightNumber" class="number-input" type="number" min="2" max="55" step="1"></div><input id="imageHeight" type="range" min="2" max="55" step="1"></div>
+        </section>
+        <section class="group">
+          <h3>显示选项</h3>
+          <label class="check"><input id="auxiliary" type="checkbox" checked>显示像点投影线（核心延长线始终显示）</label>
+          <label class="check"><input id="focusGuide" type="checkbox" checked>突出显示“经过 F”的辅助线</label>
+          <label class="check"><input id="formulaToggle" type="checkbox" checked>显示公式计算过程</label>
+          <label class="check"><input id="signToggle" type="checkbox" checked>显示正负号说明</label>
+          <div class="field" style="margin-top: 14px"><div class="label-row"><span>像区放大</span><code id="zoomValue">100%</code></div><input id="zoom" type="range" min="1" max="2.2" step="0.1" value="1"></div>
+          <button id="zoomReset" style="width: 100%; padding: 7px 10px">完整视图（100%）</button>
+        </section>
+        <section class="group">
+          <h3>典型成像场景</h3>
+          <div class="button-grid">
+            <button id="presetReal">实像</button><button id="presetVirtualInside">虚像：H—H′内</button>
+            <button id="presetVirtualLeft" class="wide">虚像：H 左侧</button>
+            <button id="presetVirtualObjectInside">虚物：H—H′内</button><button id="presetVirtualObjectRight">虚物：H′右侧</button>
+          </div>
+        </section>
+        <section class="group">
+          <h3>图解动画</h3>
+          <div class="button-grid">
+            <button id="start" class="primary wide">开始图解</button>
+            <button id="previous">← 上一步</button><button id="next">下一步 →</button>
+            <button id="auto">自动演示</button><button id="all">显示全部</button>
+            <button id="reset" class="wide">重置为示例参数</button>
+          </div>
+          <p class="hint">也可以直接拖动图中的 <b>物体 AB</b> 改变物距，或拖动 <b>F′</b> 改变焦距。</p>
+        </section>
+      </aside>
+
+      <section class="stage" aria-label="图解绘图区">
+        <div class="stage-head"><strong>动态光线追迹</strong><div class="legend"><span><i class="l1"></i>第一条特殊光线</span><span><i class="l2"></i>第二条特殊光线</span><span><i class="aux"></i>辅助/反向延长线</span></div></div>
+        <div class="panel canvas-wrap"><svg id="diagram" viewBox="0 0 1060 560" role="img" aria-label="理想光学系统物象关系图解"></svg></div>
+        <div id="caption" class="caption"></div>
+      </section>
+
+      <aside class="panel results" aria-label="计算结果">
+        <h2 class="panel-title">成像结果</h2>
+        <div class="result-card"><div id="stateLabel" class="state">当前状态</div><div id="property" class="big">—</div><div id="locationNote" class="location-note">—</div></div>
+        <dl class="metrics">
+          <div class="metric"><dt>物距 <i>l</i></dt><dd id="lValue">—</dd></div>
+          <div class="metric"><dt>像距 <i>l′</i></dt><dd id="lpValue">—</dd></div>
+          <div class="metric"><dt>横向放大率 <i>β</i></dt><dd id="betaValue">—</dd></div>
+          <div class="metric"><dt>像高 <i>y′</i></dt><dd id="ypValue">—</dd></div>
+          <div class="metric"><dt>像点横坐标 <i>x</i><sub>A′</sub></dt><dd id="xImageValue">—</dd></div>
+        </dl>
+        <div id="formulaBox" class="formula"></div>
+        <div id="signBox" class="sign-note"><b>符号约定：</b>光从左向右传播为正。物体在 H 左侧时，<i>l &lt; 0</i>；实像在 H′ 右侧时，<i>l′ &gt; 0</i>。</div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      const $ = id => document.getElementById(id);
+      const svg = $('diagram');
+      const ns = 'http://www.w3.org/2000/svg';
+      const fmt = (n, unit = '') => Number.isFinite(n) ? `${n >= 0 ? '+' : ''}${n.toFixed(2)}${unit}` : '∞';
+      const clean = n => (Math.abs(n) < 1e-9 ? 0 : n);
+      const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+      let state = { solveMode: 'object', f: 35, gap: 16, objectL: -92, objectY: 24, imageL: 56.49, imageY: -14.74, l: -92, y: 24, step: 0, auxiliary: true, focusGuide: true, formula: true, signs: true, zoom: 1 };
+      let autoTimer = null, drag = null;
+      const steps = [
+        ['准备图解', '已建立光轴、主平面、焦点和物体。点击“开始图解”，按特殊光线规则逐步确定像点。'],
+        ['步骤 1 / 5', '从物点 B 作第一条特殊光线：它平行于光轴入射。'],
+        ['步骤 2 / 5', '第一条光线经系统后通过像方焦点 F′。'],
+        ['步骤 3 / 5', '从物点 B 作第二条特殊光线：其反向延长线通过物方焦点 F。'],
+        ['步骤 4 / 5', '第二条光线经系统后平行于光轴。两条出射光线的交点就是像点 B′。'],
+        ['步骤 5 / 5', '将 B′ 投影到光轴得到 A′，于是得到完整的像 A′B′；右侧同时给出公式法结果。']
+      ];
+      const virtualObjectSteps = [
+        ['准备图解', '当前为虚物：Bᵥ 位于 H 的右侧。虚线表示入射光束若不受系统作用将会聚到的物点。'],
+        ['步骤 1 / 5', '从左侧作一条平行光轴的实际入射光线；其经过 H 后的虚线延长线指向虚物 Bᵥ。'],
+        ['步骤 2 / 5', '光线在 H 与 H′之间按主平面规则传递到等高点，再从 H′出射并通过 F′。'],
+        ['步骤 3 / 5', '第二条实际入射光线通过物方焦点 F；它从 H 向右的虚线延长线同样指向虚物 Bᵥ。'],
+        ['步骤 4 / 5', '第二条光线在 H—H′之间的路径已保留显示，经过 H′后平行于光轴。两条出射线（或其延长线）的交点给出 B′。'],
+        ['步骤 5 / 5', '由 B′向光轴作垂线得到 A′。右侧同时显示带符号的 l、l′、β 和 y′。']
+      ];
+      const imageSolveSteps = [
+        ['准备反求', '已给定像 A′B′。根据光路可逆性，从该像对应的两条特殊光线反向追迹即可确定物点 B。'],
+        ['步骤 1 / 5', '第一条对应光线在 H′处的高度与 B′一致；沿它反向追迹，可得到物方平行于光轴的入射段。'],
+        ['步骤 2 / 5', '将该光线通过 H—H′之间的等高传递关系连接起来；图中同时保留它通过 F′的关系。'],
+        ['步骤 3 / 5', '第二条对应光线在像方平行于光轴；反向追迹后，其物方延长线通过 F。'],
+        ['步骤 4 / 5', '两条反向追迹光线在物方相交（或延长线相交）的位置就是物点 B。'],
+        ['步骤 5 / 5', '由 B向光轴作垂线得到 A。右侧给出 1/l = 1/l′ − 1/f′ 的反求计算。']
+      ];
+
+      const els = {
+        solveMode: $('solveMode'), modeHint: $('modeHint'), objectInputGroup: $('objectInputGroup'), imageInputGroup: $('imageInputGroup'),
+        focus: $('focus'), focusN: $('focusNumber'), systemType: $('systemType'), gap: $('gap'), gapN: $('gapNumber'),
+        object: $('objectDistance'), objectN: $('objectNumber'), objectType: $('objectType'), height: $('height'), heightN: $('heightNumber'),
+        image: $('imageDistance'), imageN: $('imageDistanceNumber'), imageType: $('imageType'), imageOrientation: $('imageOrientation'), imageHeight: $('imageHeight'), imageHeightN: $('imageHeightNumber'),
+        auxiliary: $('auxiliary'), focusGuide: $('focusGuide'), formula: $('formulaToggle'), signs: $('signToggle'), zoom: $('zoom'), zoomValue: $('zoomValue'), zoomReset: $('zoomReset'),
+        start: $('start'), prev: $('previous'), next: $('next'), auto: $('auto'), all: $('all'), reset: $('reset'),
+        presetReal: $('presetReal'), presetVirtualInside: $('presetVirtualInside'), presetVirtualLeft: $('presetVirtualLeft'), presetVirtualObjectInside: $('presetVirtualObjectInside'), presetVirtualObjectRight: $('presetVirtualObjectRight'),
+        caption: $('caption'), stateLabel: $('stateLabel'), property: $('property'), locationNote: $('locationNote'), l: $('lValue'), lp: $('lpValue'), beta: $('betaValue'), yp: $('ypValue'), xImage: $('xImageValue'), formulaBox: $('formulaBox'), signBox: $('signBox')
+      };
+
+      function syncControls() {
+        els.solveMode.value = state.solveMode;
+        els.objectInputGroup.classList.toggle('hidden', state.solveMode !== 'object');
+        els.imageInputGroup.classList.toggle('hidden', state.solveMode !== 'image');
+        els.modeHint.textContent = state.solveMode === 'object' ? '输入物距 l 与物高 y，动态求得像。' : '输入像距 l′ 与像高 y′，根据光路可逆性反求物。';
+        els.focus.value = els.focusN.value = Math.abs(state.f);
+        els.systemType.value = state.f >= 0 ? '1' : '-1';
+        els.gap.value = els.gapN.value = state.gap;
+        els.object.value = els.objectN.value = Math.abs(state.objectL);
+        els.objectType.value = state.objectL >= 0 ? '1' : '-1';
+        els.height.value = els.heightN.value = Math.abs(state.objectY);
+        els.image.value = els.imageN.value = Math.abs(state.imageL);
+        els.imageType.value = state.imageL >= 0 ? '1' : '-1';
+        els.imageOrientation.value = state.imageY >= 0 ? '1' : '-1';
+        els.imageHeight.value = els.imageHeightN.value = Math.abs(state.imageY);
+        els.auxiliary.checked = state.auxiliary; els.focusGuide.checked = state.focusGuide; els.formula.checked = state.formula; els.signs.checked = state.signs;
+        els.zoom.value = state.zoom; els.zoomValue.textContent = `${Math.round(state.zoom * 100)}%`;
+      }
+
+      function solveFromInput() {
+        if (state.solveMode === 'object') {
+          state.l = state.objectL;
+          state.y = state.objectY;
+          return;
+        }
+        const inverseObjectDistance = 1 / state.imageL - 1 / state.f;
+        const nearInfinity = Math.abs(inverseObjectDistance) < 0.00001;
+        state.l = nearInfinity ? Math.sign(inverseObjectDistance || 1) * 1000 : 1 / inverseObjectDistance;
+        const beta = state.imageL / state.l;
+        state.y = state.imageY / beta;
+      }
+
+      function calc() {
+        const d = 1 / state.f + 1 / state.l;
+        const imageMode = state.solveMode === 'image';
+        const infinity = imageMode ? false : Math.abs(d) < 0.00001;
+        const lp = imageMode ? state.imageL : (infinity ? (d >= 0 ? Infinity : -Infinity) : 1 / d);
+        const beta = infinity ? NaN : lp / state.l;
+        const yp = imageMode ? state.imageY : (infinity ? NaN : beta * state.y);
+        const hAtH = Math.abs(state.f + state.l) < 0.00001 ? Infinity : state.y * state.f / (state.f + state.l);
+        return { d, infinity, lp, beta, yp, hAtH };
+      }
+
+      function el(name, attrs = {}, text = '') {
+        const node = document.createElementNS(ns, name);
+        Object.entries(attrs).forEach(([k, v]) => node.setAttribute(k, v));
+        if (text) node.textContent = text;
+        svg.appendChild(node); return node;
+      }
+      function line(x1, y1, x2, y2, attrs = {}) { return el('line', { x1, y1, x2, y2, ...attrs }); }
+      function text(x, y, value, attrs = {}) { return el('text', { x, y, ...attrs }, value); }
+      function group(attrs = {}) { return el('g', attrs); }
+      function addTo(parent, name, attrs = {}, value = '') { const n = document.createElementNS(ns, name); Object.entries(attrs).forEach(([k, v]) => n.setAttribute(k, v)); if (value) n.textContent = value; parent.appendChild(n); return n; }
+
+      function drawArrow(parent, x, yAxis, topY, color, labels, dragType = null, dashed = false) {
+        const style = { stroke: color, 'stroke-width': 3, 'stroke-linecap': 'round', fill: 'none' };
+        if (dashed) style['stroke-dasharray'] = '7 6';
+        addTo(parent, 'line', { x1: x, y1: yAxis, x2: x, y2: topY, ...style });
+        const dir = topY < yAxis ? -1 : 1;
+        addTo(parent, 'path', { d: `M ${x-7} ${topY-dir*11} L ${x} ${topY} L ${x+7} ${topY-dir*11}`, ...style });
+        addTo(parent, 'circle', { cx: x, cy: yAxis, r: 3.5, fill: color });
+        if (labels) {
+          addTo(parent, 'text', { x: x - 18, y: yAxis + 20, fill: color, 'font-size': 14, 'font-weight': 700 }, labels.base);
+          addTo(parent, 'text', { x: x + 9, y: topY + (topY < yAxis ? -9 : 18), fill: color, 'font-size': 14, 'font-weight': 700 }, labels.top);
+        }
+        if (dragType) addTo(parent, 'rect', { x: x - 18, y: Math.min(yAxis, topY) - 20, width: 36, height: Math.abs(yAxis - topY) + 40, fill: 'transparent', cursor: 'ew-resize', 'data-drag': dragType });
+      }
+
+      function sceneFor(c) {
+        const imgXRaw = c.infinity ? state.gap + (c.d < 0 ? -250 : 250) : state.gap + c.lp;
+        const imgYRaw = c.infinity ? 0 : c.yp;
+        const hDisplay = Number.isFinite(c.hAtH) ? c.hAtH : state.y * 5;
+        const xs = [state.l, -state.f, 0, state.gap, state.gap + state.f, imgXRaw];
+        const ys = [0, state.y, imgYRaw, hDisplay].filter(Number.isFinite);
+        const xMin = Math.min(...xs, -30) - 26, xMax = Math.max(...xs, 35) + 30;
+        const yAbs = Math.max(46, ...ys.map(v => Math.abs(v) * 1.24));
+        const width = 1060, height = 560, padX = 52, padY = 58;
+        const fitScale = Math.min((width - padX * 2) / (xMax - xMin), (height - padY * 2) / (yAbs * 2));
+        const scale = fitScale * state.zoom;
+        const xCenter = state.zoom > 1.01 && !c.infinity ? state.gap + c.lp : (xMin + xMax) / 2;
+        const yCenter = state.zoom > 1.01 && !c.infinity ? c.yp / 2 : 0;
+        const axisY = height / 2 + yCenter * scale;
+        const X = x => width / 2 + (x - xCenter) * scale;
+        const Y = y => height / 2 - (y - yCenter) * scale;
+        const viewMin = xCenter - width / 2 / scale;
+        const viewMax = xCenter + width / 2 / scale;
+        return { imgXRaw, imgYRaw, hDisplay, xMin, xMax, width, height, scale, X, Y, axisY, viewMin, viewMax, xCenter };
+      }
+
+      function draw() {
+        const c = calc();
+        const scene = sceneFor(c);
+        const { xMin, xMax, width, height, scale, X, Y, axisY, viewMin, viewMax } = scene;
+        const lineAttr = { 'vector-effect': 'non-scaling-stroke' };
+        svg.replaceChildren();
+        const defs = el('defs');
+        const marker = addTo(defs, 'marker', { id: 'axisArrow', markerWidth: 8, markerHeight: 8, refX: 7, refY: 4, orient: 'auto' });
+        addTo(marker, 'path', { d: 'M0,0 L8,4 L0,8 Z', fill: '#69788c' });
+        const dots = addTo(defs, 'pattern', { id: 'dotGrid', width: 24, height: 24, patternUnits: 'userSpaceOnUse' });
+        addTo(dots, 'circle', { cx: 1, cy: 1, r: .8, fill: '#e8edf5' });
+        el('rect', { x: 0, y: 0, width, height, fill: 'url(#dotGrid)' });
+
+        // Scale tick marks
+        const guess = 80 / scale;
+        const options = [1, 2, 5, 10, 20, 25, 50, 100];
+        const tick = options.find(v => v >= guess) || 200;
+        const startTick = Math.ceil(viewMin / tick) * tick;
+        for (let v = startTick; v <= viewMax; v += tick) {
+          if (Math.abs(v) < 0.001) continue;
+          line(X(v), axisY - 4, X(v), axisY + 4, { stroke: '#a9b4c3', 'stroke-width': 1, ...lineAttr });
+          text(X(v), axisY + 20, `${v}`, { 'text-anchor': 'middle', fill: '#7c899a', 'font-size': 10 });
+        }
+        line(24, axisY, width - 25, axisY, { stroke: '#6d7b8c', 'stroke-width': 1.6, 'marker-end': 'url(#axisArrow)', ...lineAttr });
+        text(width - 25, axisY - 10, '光轴  x', { 'text-anchor': 'end', fill: '#5f6d80', 'font-size': 13, 'font-weight': 650 });
+
+        // Main planes and system boundary
+        const sys = group();
+        addTo(sys, 'rect', { x: X(0), y: 49, width: Math.max(4, X(state.gap) - X(0)), height: height - 88, rx: 6, fill: '#eaf1ff', opacity: .74 });
+        [[0, 'H'], [state.gap, 'H′']].forEach(([v, name]) => {
+          line(X(v), 48, X(v), height - 40, { stroke: '#246bfd', 'stroke-width': 2, 'stroke-dasharray': '7 5', opacity: .9, ...lineAttr });
+          text(X(v), 40, name, { 'text-anchor': 'middle', fill: '#1a5de2', 'font-size': 16, 'font-weight': 750 });
+        });
+        if (state.gap > 0) text((X(0) + X(state.gap)) / 2, height - 20, '理想光学系统', { 'text-anchor': 'middle', fill: '#4e73b7', 'font-size': 11 });
+        if (state.gap > 0 && state.step >= 2) text((X(0) + X(state.gap)) / 2, 66, 'H—H′内部路径（示意）', { 'text-anchor': 'middle', fill: '#5974a5', 'font-size': 10, 'font-weight': 700 });
+
+        // Focuses
+        const fY = axisY;
+        [[-state.f, 'F', '#0c9b73'], [state.gap + state.f, 'F′', '#0c9b73']].forEach(([v, name, color]) => {
+          el('circle', { cx: X(v), cy: fY, r: 6.5, fill: '#fff', stroke: color, 'stroke-width': 2.4, ...lineAttr });
+          text(X(v), fY - 14, name, { 'text-anchor': 'middle', fill: color, 'font-size': 15, 'font-weight': 750 });
+          if (name === 'F′') el('rect', { x: X(v) - 16, y: fY - 28, width: 32, height: 50, fill: 'transparent', cursor: 'ew-resize', 'data-drag': 'focus' });
+        });
+
+        const obj = group();
+        const isVirtualObject = state.l > 0;
+        const objectColor = isVirtualObject ? '#dd7a20' : '#1e5eaa';
+        drawArrow(obj, X(state.l), axisY, Y(state.y), objectColor, isVirtualObject ? { base: 'Aᵥ', top: 'Bᵥ' } : { base: 'A', top: 'B' }, state.solveMode === 'object' ? 'object' : null, isVirtualObject);
+        text(X(state.l), Math.min(Y(state.y), axisY) - 29, state.solveMode === 'image' ? (isVirtualObject ? '求得的虚物 AᵥBᵥ' : '求得的实物 AB') : (isVirtualObject ? '虚物 AᵥBᵥ' : '实物 AB'), { 'text-anchor': 'middle', fill: objectColor, 'font-size': 12, 'font-weight': 700 });
+
+        const bX = state.l, bY = state.y, h = c.hAtH;
+        const endRight = viewMax - 5, endLeft = viewMin + 5;
+        const rayGroup = group({ 'stroke-linejoin': 'round', 'stroke-linecap': 'round' });
+        const red = { stroke: '#f06449', 'stroke-width': 2.7, fill: 'none', ...lineAttr };
+        const purple = { stroke: '#8064e9', 'stroke-width': 2.7, fill: 'none', ...lineAttr };
+        const aux = { stroke: '#91a0b3', 'stroke-width': 1.6, fill: 'none', 'stroke-dasharray': '6 6', opacity: .9, ...lineAttr };
+        const interplane = color => ({ stroke: color, 'stroke-width': 2.2, fill: 'none', 'stroke-dasharray': '3 4', opacity: .82, ...lineAttr });
+
+        // Ray 1: parallel input -> F′
+        if (state.step >= 1) {
+          if (isVirtualObject) {
+            line(X(viewMin + 2), Y(bY), X(0), Y(bY), red);
+            line(X(0), Y(bY), X(bX), Y(bY), { stroke: '#dd7a20', 'stroke-width': 2.5, fill: 'none', 'stroke-dasharray': '8 5', opacity: .96, ...lineAttr });
+          } else line(X(bX), Y(bY), X(0), Y(bY), red);
+        }
+        if (state.step >= 2 && state.gap > 0) line(X(0), Y(bY), X(state.gap), Y(bY), interplane('#f06449'));
+        if (state.step >= 2) {
+          if (c.infinity) {
+            const endY = bY - (endRight - state.gap) * bY / state.f;
+            line(X(state.gap), Y(bY), X(endRight), Y(endY), red);
+          } else if (c.lp > 0) {
+            const after = Math.min(endRight, state.gap + c.lp + 25);
+            const yAfter = bY * (1 - (after - state.gap) / state.f);
+            line(X(state.gap), Y(bY), X(after), Y(yAfter), red);
+          } else {
+            const ray1Y = x => bY * (1 - (x - state.gap) / state.f);
+            line(X(state.gap), Y(bY), X(endRight), Y(ray1Y(endRight)), red);
+            {
+              const imageX = state.gap + c.lp, imageY = ray1Y(imageX);
+              line(X(state.gap), Y(bY), X(imageX), Y(imageY), { stroke: '#f06449', 'stroke-width': 2.4, fill: 'none', 'stroke-dasharray': '8 5', opacity: .92, ...lineAttr });
+              text((X(state.gap) + X(imageX)) / 2, (Y(bY) + Y(imageY)) / 2 - 9, '反向延长线', { 'text-anchor': 'middle', fill: '#cf513b', 'font-size': 10, 'font-weight': 700 });
+            }
+          }
+        }
+
+        // Ray 2: line whose backward extension meets F -> parallel exit
+        if (state.step >= 3 && !c.infinity) {
+          const incomingEndX = 0;
+          const focusGuide = { stroke: '#9a54e8', 'stroke-width': 2.5, fill: 'none', 'stroke-dasharray': '9 5', opacity: .95, ...lineAttr };
+          if (state.focusGuide) {
+            line(X(-state.f), axisY, X(incomingEndX), Y(h), focusGuide);
+            el('circle', { cx: X(-state.f), cy: axisY, r: 11, fill: 'none', stroke: '#9a54e8', 'stroke-width': 2, 'stroke-dasharray': '3 3', ...lineAttr });
+            text(X(-state.f), axisY + 48, '经过 F 的辅助线', { 'text-anchor': 'middle', fill: '#7a3ec0', 'font-size': 11, 'font-weight': 700 });
+          }
+          if (isVirtualObject) {
+            const yAtLeft = h * (viewMin + 2 + state.f) / state.f;
+            line(X(viewMin + 2), Y(yAtLeft), X(incomingEndX), Y(h), purple);
+            line(X(incomingEndX), Y(h), X(bX), Y(bY), { stroke: '#dd7a20', 'stroke-width': 2.5, fill: 'none', 'stroke-dasharray': '8 5', opacity: .96, ...lineAttr });
+          } else {
+            line(X(bX), Y(bY), X(incomingEndX), Y(h), purple);
+            if (state.l > -state.f) line(X(bX), Y(bY), X(-state.f), Y(0), state.focusGuide ? focusGuide : aux);
+          }
+        }
+        if (state.step >= 4 && state.gap > 0 && !c.infinity) line(X(0), Y(h), X(state.gap), Y(h), interplane('#8064e9'));
+        if (state.step >= 4 && !c.infinity) {
+          if (c.lp > 0) line(X(state.gap), Y(h), X(Math.min(endRight, state.gap + c.lp + 25)), Y(h), purple);
+          else {
+            line(X(state.gap), Y(h), X(endRight), Y(h), purple);
+            line(X(state.gap), Y(h), X(state.gap + c.lp), Y(h), { stroke: '#8064e9', 'stroke-width': 2.4, fill: 'none', 'stroke-dasharray': '8 5', opacity: .95, ...lineAttr });
+          }
+        }
+        if (state.step >= 3 && c.infinity) {
+          text((X(0) + X(state.gap)) / 2, 82, 'l = −f′：第二条特殊光线在此构型退化', { 'text-anchor': 'middle', fill: '#8064e9', 'font-size': 11 });
+        }
+
+        // Point and image construction
+        const imageIsGiven = state.solveMode === 'image';
+        if ((state.step >= 4 || imageIsGiven) && !c.infinity) {
+          el('circle', { cx: X(state.gap + c.lp), cy: Y(c.yp), r: 5.8, fill: '#fff', stroke: '#d13a62', 'stroke-width': 2.6, ...lineAttr });
+          text(X(state.gap + c.lp) + 9, Y(c.yp) - 9, 'B′', { fill: '#c92f57', 'font-size': 15, 'font-weight': 750 });
+          if (state.auxiliary) line(X(state.gap + c.lp), Y(c.yp), X(state.gap + c.lp), axisY, { stroke: '#b1bdcb', 'stroke-width': 1.2, 'stroke-dasharray': '4 5', ...lineAttr });
+        }
+        if ((state.step >= 5 || imageIsGiven) && !c.infinity) {
+          const image = group();
+          drawArrow(image, X(state.gap + c.lp), axisY, Y(c.yp), imageIsGiven ? '#bc5c1c' : '#d13a62', { base: 'A′', top: 'B′' }, imageIsGiven ? 'image' : null);
+          text(X(state.gap + c.lp), Math.min(Y(c.yp), axisY) - 29, imageIsGiven ? '给定像 A′B′' : '像 A′B′', { 'text-anchor': 'middle', fill: imageIsGiven ? '#a45118' : '#c92f57', 'font-size': 12, 'font-weight': 700 });
+        }
+        if (state.step >= 4 && c.infinity) {
+          const x = c.d >= 0 ? width - 70 : 70;
+          text(x, 95, '像位于无穷远  ∞', { 'text-anchor': 'middle', fill: '#c76f00', 'font-size': 16, 'font-weight': 750 });
+          text(x, 117, '出射光线趋于平行', { 'text-anchor': 'middle', fill: '#8d6a35', 'font-size': 12 });
+        }
+
+        text(X(state.l), axisY + 39, `l = ${state.l} cm`, { 'text-anchor': 'middle', fill: '#4773ab', 'font-size': 11 });
+        text(X(state.gap + state.f), axisY + 39, `f′ = ${state.f} cm`, { 'text-anchor': 'middle', fill: '#158062', 'font-size': 11 });
+        if ((state.step >= 5 || imageIsGiven) && !c.infinity) text(X(state.gap + c.lp), axisY + 39, `l′ = ${c.lp.toFixed(1)} cm`, { 'text-anchor': 'middle', fill: '#bd3155', 'font-size': 11 });
+        updateText(c);
+      }
+
+      function updateText(c) {
+        const sequence = state.solveMode === 'image' ? imageSolveSteps : (state.l > 0 ? virtualObjectSteps : steps);
+        const [label, explanation] = sequence[state.step];
+        els.caption.innerHTML = `<b>${label}：</b>${explanation}`;
+        els.stateLabel.textContent = c.infinity ? '焦点构型' : (state.solveMode === 'image' ? '由像反求结果' : '当前成像性质');
+        let prop;
+        if (c.infinity) prop = '像在无穷远';
+        else {
+          const reality = c.lp > 0 ? '实像' : '虚像';
+          const orientation = c.beta < 0 ? '倒立' : '正立';
+          const size = Math.abs(c.beta) > 1.005 ? '放大像' : Math.abs(c.beta) < .995 ? '缩小像' : '等大像';
+          prop = `${reality} · ${orientation} · ${size}`;
+        }
+        els.property.textContent = prop;
+        els.l.textContent = fmt(state.l, ' cm');
+        els.lp.textContent = c.infinity ? '∞' : fmt(clean(c.lp), ' cm');
+        els.beta.textContent = c.infinity ? '—' : clean(c.beta).toFixed(3);
+        els.yp.textContent = c.infinity ? '—' : fmt(clean(c.yp), ' cm');
+        const imageX = state.gap + c.lp;
+        els.xImage.textContent = c.infinity ? '∞' : fmt(clean(imageX), ' cm');
+        const objectNote = state.l > 0 ? (state.l < state.gap ? '当前为虚物，位于 H—H′之间。' : '当前为虚物，位于 H′右侧。') : '当前为实物，位于 H 左侧。';
+        if (c.infinity) els.locationNote.textContent = `${objectNote} 出射光线平行，像点沿光轴趋于无穷远。`;
+        else if (c.lp < 0 && imageX >= 0 && imageX <= state.gap) els.locationNote.textContent = `${objectNote} 虚像位于 H 与 H′之间（在 H 的右侧、H′的左侧）。`;
+        else if (c.lp < 0) els.locationNote.textContent = `${objectNote} 虚像位于 H′左侧；可调整主平面间距或物距，观察其进入 H—H′区间。`;
+        else els.locationNote.textContent = `${objectNote} 实像位于 H′右侧，由两条实际出射光线相交形成。`;
+        const denom = `1/${state.f.toFixed(0)} + 1/(${state.l.toFixed(0)})`;
+        els.formulaBox.innerHTML = c.infinity
+          ? `<div>1/l′ = ${denom} = 0</div><div>∴&nbsp; l′ → ∞</div><div class="sub">物体位于物方焦平面，出射光线平行，像位于无穷远。</div>`
+          : state.solveMode === 'image'
+            ? `<div>已知&nbsp; l′ = ${fmt(clean(c.lp), ' cm')}，y′ = ${fmt(clean(c.yp), ' cm')}</div><div>1/l = 1/l′ − 1/f′</div><div>= 1/(${c.lp.toFixed(2)}) − 1/(${state.f.toFixed(2)}) = ${(1 / c.lp - 1 / state.f).toFixed(5)}</div><div>∴&nbsp; l = ${fmt(clean(state.l), ' cm')}</div><div>β = l′/l = ${c.beta.toFixed(3)}</div><div>y = y′/β = ${fmt(clean(state.y), ' cm')}</div>`
+            : `<div>1/l′ = 1/f′ + 1/l</div><div>= ${denom} = ${c.d.toFixed(5)}</div><div>∴&nbsp; l′ = ${fmt(clean(c.lp), ' cm')}</div><div>β = l′/l = ${c.beta.toFixed(3)}</div><div>y′ = βy = ${fmt(clean(c.yp), ' cm')}</div>`;
+        els.formulaBox.classList.toggle('hidden', !state.formula);
+        els.signBox.classList.toggle('hidden', !state.signs);
+        els.prev.disabled = state.step === 0;
+        els.next.disabled = state.step === steps.length - 1;
+      }
+
+      function refresh() { solveFromInput(); syncControls(); draw(); }
+      function bindPair(range, number, key, min, max) {
+        const apply = value => {
+          const parsed = Number(value); if (!Number.isFinite(parsed)) return;
+          if (key === 'f') state.f = Math.sign(state.f || 1) * clamp(Math.abs(parsed), min, max);
+          else if (key === 'l') state.objectL = Math.sign(state.objectL || -1) * clamp(Math.abs(parsed), min, max);
+          else if (key === 'y') state.objectY = clamp(Math.abs(parsed), min, max);
+          else state[key] = clamp(parsed, min, max);
+          refresh();
+        };
+        range.addEventListener('input', e => apply(e.target.value));
+        number.addEventListener('change', e => apply(e.target.value));
+      }
+      bindPair(els.focus, els.focusN, 'f', 5, 120);
+      bindPair(els.gap, els.gapN, 'gap', 0, 60);
+      bindPair(els.object, els.objectN, 'l', 5, 220);
+      bindPair(els.height, els.heightN, 'y', 2, 55);
+      function bindImagePair(range, number, key, min, max) {
+        const apply = value => {
+          const parsed = Number(value); if (!Number.isFinite(parsed)) return;
+          if (key === 'imageL') state.imageL = Math.sign(state.imageL || 1) * clamp(Math.abs(parsed), min, max);
+          if (key === 'imageY') state.imageY = Math.sign(state.imageY || 1) * clamp(Math.abs(parsed), min, max);
+          refresh();
+        };
+        range.addEventListener('input', e => apply(e.target.value));
+        number.addEventListener('change', e => apply(e.target.value));
+      }
+      bindImagePair(els.image, els.imageN, 'imageL', 5, 220);
+      bindImagePair(els.imageHeight, els.imageHeightN, 'imageY', 2, 55);
+      els.systemType.addEventListener('change', e => { state.f = Number(e.target.value) * Math.abs(state.f); refresh(); });
+      els.objectType.addEventListener('change', e => { state.objectL = Number(e.target.value) * Math.abs(state.objectL); refresh(); });
+      els.imageType.addEventListener('change', e => { state.imageL = Number(e.target.value) * Math.abs(state.imageL); refresh(); });
+      els.imageOrientation.addEventListener('change', e => { state.imageY = Number(e.target.value) * Math.abs(state.imageY); refresh(); });
+      els.solveMode.addEventListener('change', e => {
+        solveFromInput();
+        const current = calc();
+        if (e.target.value === 'image' && !current.infinity) {
+          state.imageL = current.lp;
+          state.imageY = current.yp;
+        }
+        if (e.target.value === 'object') {
+          state.objectL = state.l;
+          state.objectY = Math.abs(state.y);
+        }
+        state.solveMode = e.target.value;
+        state.step = 0;
+        refresh();
+      });
+      [['auxiliary', 'auxiliary'], ['focusGuide', 'focusGuide'], ['formula', 'formula'], ['signs', 'signs']].forEach(([name, key]) => els[name].addEventListener('change', e => { state[key] = e.target.checked; refresh(); }));
+      els.zoom.addEventListener('input', e => { state.zoom = Number(e.target.value); refresh(); });
+      els.zoomReset.addEventListener('click', () => { state.zoom = 1; refresh(); });
+      els.start.addEventListener('click', () => { state.step = 1; refresh(); });
+      els.prev.addEventListener('click', () => { state.step = Math.max(0, state.step - 1); refresh(); });
+      els.next.addEventListener('click', () => { state.step = Math.min(steps.length - 1, state.step + 1); refresh(); });
+      els.all.addEventListener('click', () => { state.step = steps.length - 1; refresh(); });
+      els.reset.addEventListener('click', () => { stopAuto(); state = { solveMode: 'object', f: 35, gap: 16, objectL: -92, objectY: 24, imageL: 56.49, imageY: -14.74, l: -92, y: 24, step: 0, auxiliary: true, focusGuide: true, formula: true, signs: true, zoom: 1 }; refresh(); });
+      const usePreset = preset => {
+        stopAuto();
+        if (preset === 'real') state = { ...state, solveMode: 'object', f: 35, gap: 16, objectL: -92, objectY: 24, step: 5, zoom: 1 };
+        if (preset === 'inside') state = { ...state, solveMode: 'object', f: 35, gap: 60, objectL: -12, objectY: 24, step: 5, zoom: 1.3 };
+        if (preset === 'left') state = { ...state, solveMode: 'object', f: 35, gap: 16, objectL: -22, objectY: 24, step: 5, zoom: 1.25 };
+        if (preset === 'virtual-object-inside') state = { ...state, solveMode: 'object', f: 35, gap: 60, objectL: 12, objectY: 24, step: 5, zoom: 1.25 };
+        if (preset === 'virtual-object-right') state = { ...state, solveMode: 'object', f: 35, gap: 16, objectL: 75, objectY: 24, step: 5, zoom: 1.1 };
+        refresh();
+      };
+      els.presetReal.addEventListener('click', () => usePreset('real'));
+      els.presetVirtualInside.addEventListener('click', () => usePreset('inside'));
+      els.presetVirtualLeft.addEventListener('click', () => usePreset('left'));
+      els.presetVirtualObjectInside.addEventListener('click', () => usePreset('virtual-object-inside'));
+      els.presetVirtualObjectRight.addEventListener('click', () => usePreset('virtual-object-right'));
+      function stopAuto() { if (autoTimer) { clearInterval(autoTimer); autoTimer = null; } els.auto.textContent = '自动演示'; }
+      els.auto.addEventListener('click', () => {
+        if (autoTimer) return stopAuto();
+        state.step = state.step >= steps.length - 1 ? 0 : state.step; els.auto.textContent = '暂停演示'; refresh();
+        autoTimer = setInterval(() => { if (state.step >= steps.length - 1) { stopAuto(); return; } state.step++; refresh(); }, 1500);
+      });
+
+      function getWorld(e) {
+        const rect = svg.getBoundingClientRect();
+        const vx = (e.clientX - rect.left) / rect.width * 1060;
+        const scene = sceneFor(calc());
+        return scene.xCenter + (vx - 530) / scene.scale;
+      }
+      svg.addEventListener('pointerdown', e => { const target = e.target.closest('[data-drag]'); if (!target) return; drag = target.dataset.drag; svg.setPointerCapture(e.pointerId); e.preventDefault(); });
+      svg.addEventListener('pointermove', e => {
+        if (!drag) return; const w = getWorld(e);
+        if (drag === 'object') state.objectL = Math.sign(state.objectL || -1) * Math.round(clamp(Math.abs(w), 5, 220));
+        if (drag === 'image') state.imageL = Math.sign(state.imageL || 1) * Math.round(clamp(Math.abs(w - state.gap), 5, 220));
+        if (drag === 'focus') { const focal = w - state.gap; state.f = Math.sign(focal || 1) * Math.round(clamp(Math.abs(focal), 5, 120)); }
+        refresh();
+      });
+      svg.addEventListener('pointerup', () => { drag = null; });
+      svg.addEventListener('pointercancel', () => { drag = null; });
+      window.addEventListener('resize', () => draw());
+      refresh();
+    })();
+  </script>
+</body>
+</html>
